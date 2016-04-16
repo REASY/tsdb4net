@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,35 +9,57 @@ namespace Core
 {
     public class BPlusTree<K, V> where K : IComparable<K>
     {
-        private Node<K, V> _root;
+        private int _lastRootIndex = 0;
 
+        public Node<K, V> Root {get; private set;}
         public int MaxDegree { get; private set; }
+        public int Count { get; private set; }
 
         public BPlusTree(int maxDegree)
         {
             MaxDegree = maxDegree;
-            _root = new Leaf<K, V>(MaxDegree - 1);
+            Root = new Leaf<K, V>(MaxDegree - 1);
         }
         public void Insert(K k, V v)
         {
             Node<K, V> newNode = null;
-            K pivotElement =default(K);
-            _root.Insert(k, v, out newNode, out pivotElement);
+            K pivotElement = default(K);
+            Root.Insert(k, v, out newNode, out pivotElement);
             if (newNode != null)
             {
-                var newRoot = new InternalNode<K, V>(MaxDegree - 1);
-                newRoot.AddKeyChild(pivotElement, _root);
-                newRoot.Children[1] = newNode;
-                _root = newRoot;
+                if (Root is Leaf<K, V> || Root.KeyIndex < _lastRootIndex)
+                {
+                    var newRoot = new InternalNode<K, V>(MaxDegree - 1);
+                    newRoot.AddKeyChild(pivotElement, Root);
+                    newRoot.Children[1] = newNode;
+                    Root = newRoot;
+                }                
+                else
+                    (Root as InternalNode<K, V>).AddKeyChild(k, newNode);
+
             }
+            _lastRootIndex = Root.KeyIndex;
+            Count++;
+        }
+        public int GetCnt()
+        {
+            var leaf = GetTheMostLeft();
+            int cnt = 0;
+            while (leaf != null)
+            {
+                cnt += leaf.KeyIndex + 1;
+               
+                leaf = leaf.Next;
+            }
+            return cnt;
         }
         public Leaf<K, V> GetTheMostLeft()
         {
-            if (_root is Leaf<K, V>)
-                return _root as Leaf<K, V>;
+            if (Root is Leaf<K, V>)
+                return Root as Leaf<K, V>;
             else
             {
-                var node = _root;
+                var node = Root;
                 while (node is InternalNode<K, V>)
                 {
                     node = (node as InternalNode<K, V>).Children[0];
@@ -44,24 +67,44 @@ namespace Core
                 return node as Leaf<K, V>;
             }
         }
-        internal void ShowAll()
+        public int GetHeight()
         {
-            Leaf<K, V> mostLeftLeaf = null;
-            if (_root is Leaf<K, V>)
-                mostLeftLeaf = _root as Leaf<K, V>;
+            if (Root is Leaf<K, V>)
+                return 1;
             else
             {
-                Node<K, V> node = _root;
-                while (!(node is Leaf<K, V>))
+                int height = 1;
+                var node = Root;
+                while (node is InternalNode<K, V>)
                 {
                     node = (node as InternalNode<K, V>).Children[0];
+                    height++;
                 }
-                mostLeftLeaf = node as Leaf<K, V>;
+                return height;
             }
+        }
+        internal ICollection<K> DumpKeysOnLeafNodes()
+        {
+            var allKeys = new List<K>();
+            Leaf<K, V> mostLeftLeaf = GetTheMostLeft();
             Leaf<K, V> temp = mostLeftLeaf;
-            while(temp != null)
+            while (temp != null)
             {
-                for(int i = 0; i <= temp.KeyIndex; i++)
+                for (int i = 0; i <= temp.KeyIndex; i++)
+                {
+                    allKeys.Add(temp.Keys[i]);
+                }
+                temp = temp.Next;
+            }
+            return allKeys;
+        }
+        internal void ShowAll()
+        {
+            Leaf<K, V> mostLeftLeaf = GetTheMostLeft();
+            Leaf<K, V> temp = mostLeftLeaf;
+            while (temp != null)
+            {
+                for (int i = 0; i <= temp.KeyIndex; i++)
                 {
                     Console.Write("{0} ", temp.Keys[i]);
                 }

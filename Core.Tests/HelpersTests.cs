@@ -353,26 +353,26 @@ namespace Core.Tests
             {
                 for (int insertKey = 0; insertKey < 10; insertKey++)
                 {
-                    int[] keys = GenerateMaxDegreeKeys(maxDegree);
-                    int[] values = keys.ToArray();
+                    var keys = GenerateKeys(maxDegree- 1);
+                    var values = keys.ToArray();
                     int leftKeyIndex = 0;
 
                     int rightKeyIndex = 0;
-                    int[] rightKeys = null;
-                    int[] rightValues = null;
-                    int midElement = 0;
+                    long[] rightKeys = null;
+                    long[] rightValues = null;
+                    long midElement = 0;
 
-                    var realResult = new List<int>(keys);
+                    var realResult = new List<long>(keys);
                     realResult.Add(insertKey);
                     realResult.Sort();
                     int mid = (int)Math.Ceiling((float)(keys.Length - 1) / 2);
-                    int realMid = realResult.ElementAt(mid);
+                    var realMid = realResult.ElementAt(mid);
 
 
                     Helpers.SplitLeaf(keys, values, insertKey, out leftKeyIndex, out rightKeys, out rightValues, out rightKeyIndex, out midElement);
                     Assert.AreEqual(leftKeyIndex + 1 + rightKeyIndex + 1, keys.Length);
                     Assert.AreEqual(realMid, midElement);
-                    var afterSplit = new List<int>();
+                    var afterSplit = new List<long>();
                     afterSplit.Add(insertKey);
                     for (int i = 0; i <= leftKeyIndex; i++)
                         afterSplit.Add(keys[i]);
@@ -383,10 +383,10 @@ namespace Core.Tests
                 }
             }
         }
-        private int[] GenerateMaxDegreeKeys(int maxDegree)
+        private long[] GenerateKeys(int count)
         {
-            int[] result = new int[maxDegree - 1];
-            for (int i = 0; i < maxDegree - 1; i++)
+            long[] result = new long[count];
+            for (int i = 0; i < count; i++)
             {
                 result[i] = i;
             }

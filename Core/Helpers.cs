@@ -9,202 +9,6 @@ namespace Core
 {
     static class Helpers
     {
-        private const int SEARCH_ALGORITHM_KEYS_COUNT_THRESHOLD = 55;
-
-        public static Node<K, V> RecursiveChooseSubtree<K, V>(K key, Node<K, V> node) where K : IComparable<K>
-        {
-            if (node is Leaf<K, V>) return node;
-            else
-            {
-                var n = node as InternalNode<K, V>;
-                int index = UpperBound(n.Keys, n.KeyIndex, key);
-                return RecursiveChooseSubtree(key, n.Children[index]);
-            }
-        }
-        public static Node<K, V> ChooseSubtree<K, V>(K key, Node<K, V> node) where K : IComparable<K>
-        {
-            if (node is Leaf<K, V>) return node;
-            else
-            {
-                while (true)
-                {
-                    var n = node as InternalNode<K, V>;
-                    int index = UpperBound(n.Keys, n.KeyIndex, key);
-                    node = n.Children[index];
-                    if (node is Leaf<K, V>)
-                        return node;
-                }
-            }
-        }
-        public static int UpperBound<K>(K[] keys, int lastIndex, K key) where K : IComparable<K>
-        {
-            if (lastIndex <= SEARCH_ALGORITHM_KEYS_COUNT_THRESHOLD)
-                return UpperBoundLinear8(keys, lastIndex, key);
-            else
-                return UpperBoundBinary(keys, lastIndex, key);
-        }
-        public static int UpperBoundLinear<K>(K[] keys, int lastIndex, K key) where K : IComparable<K>
-        {
-            int index = -1;
-            for (int i = 0; i <= lastIndex; i++)
-            {
-                if (key.CompareTo(keys[i]) < 0) { index = i; break; }
-            }
-            if (index == -1) index = lastIndex + 1;
-            return index;
-        }
-        public static int UpperBoundLinear4<K>(K[] keys, int lastIndex, K key) where K : IComparable<K>
-        {
-            int index = -1;
-            int fullCnt = lastIndex / 4;
-            if (fullCnt == 0)
-            {
-                for (int i = 0; i <= lastIndex; i++)
-                {
-                    if (key.CompareTo(keys[i]) < 0) { index = i; break; }
-                }
-                if (index == -1) index = lastIndex + 1;
-                return index;
-            }
-            else
-            {
-                int i = 0;
-                for (i = 0; i < fullCnt; i += 4)
-                {
-                    if (key.CompareTo(keys[i]) < 0) { index = i; break; }
-                    if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; break; }
-                    if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; break; }
-                    if (key.CompareTo(keys[i + 3]) < 0) { index = i + 3; break; }
-                }
-                int mod = lastIndex % 4;
-                switch(mod)
-                {
-                    case 0:
-                        break;
-                    case 1:
-                        if (key.CompareTo(keys[i]) < 0) {  index = i;  }
-                        break;
-                    case 2:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1;}
-                        break;
-                    case 3:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; }
-                        break;
-                }
-                if (index == -1) index = lastIndex + 1;
-                return index;
-            }
-        }
-        public static int UpperBoundLinear8<K>(K[] keys, int lastIndex, K key) where K : IComparable<K>
-        {
-            int index = -1;
-            int fullCnt = lastIndex / 8;
-            if (fullCnt == 0)
-            {
-                for (int i = 0; i <= lastIndex; i++)
-                {
-                    if (key.CompareTo(keys[i]) < 0) { index = i; break; }
-                }
-                if (index == -1) index = lastIndex + 1;
-                return index;
-            }
-            else
-            {
-                int i = 0;
-                for (i = 0; i < fullCnt; i += 8)
-                {
-                    if (key.CompareTo(keys[i]) < 0) { index = i; break; }
-                    if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; break; }
-                    if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; break; }
-                    if (key.CompareTo(keys[i + 3]) < 0) { index = i + 3; break; }
-                    if (key.CompareTo(keys[i + 4]) < 0) { index = i + 4; break; }
-                    if (key.CompareTo(keys[i + 5]) < 0) { index = i + 5; break; }
-                    if (key.CompareTo(keys[i + 6]) < 0) { index = i + 6; break; }
-                    if (key.CompareTo(keys[i + 7]) < 0) { index = i + 7; break; }
-                }
-                int mod = lastIndex % 8;
-                switch (mod)
-                {
-                    case 0:
-                        break;
-                    case 1:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        break;
-                    case 2:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        break;
-                    case 3:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; }
-                        break;
-                    case 4:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; }
-                        if (key.CompareTo(keys[i + 3]) < 0) { index = i + 3; }
-                        break;
-                    case 5:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; }
-                        if (key.CompareTo(keys[i + 3]) < 0) { index = i + 3; }
-                        if (key.CompareTo(keys[i + 4]) < 0) { index = i + 4; }
-                        break;
-                    case 6:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; }
-                        if (key.CompareTo(keys[i + 3]) < 0) { index = i + 3; }
-                        if (key.CompareTo(keys[i + 4]) < 0) { index = i + 4; }
-                        if (key.CompareTo(keys[i + 5]) < 0) { index = i + 5; }
-                        break;
-                    case 7:
-                        if (key.CompareTo(keys[i]) < 0) { index = i; }
-                        if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; }
-                        if (key.CompareTo(keys[i + 2]) < 0) { index = i + 2; }
-                        if (key.CompareTo(keys[i + 3]) < 0) { index = i + 3; }
-                        if (key.CompareTo(keys[i + 4]) < 0) { index = i + 4; }
-                        if (key.CompareTo(keys[i + 5]) < 0) { index = i + 5; }
-                        if (key.CompareTo(keys[i + 6]) < 0) { index = i + 6; }
-                        break;
-                }
-                if (index == -1) index = lastIndex + 1;
-                return index;
-            }
-        }
-        public static int UpperBoundBinary<K>(K[] keys, int lastIndex, K key) where K : IComparable<K>
-        {
-            int low = 0;
-            int high = lastIndex;
-            int mid = 0;
-            int prevMid = 0;
-            while (true)
-            {
-                mid = low + (high - low) / 2;
-                if (keys[mid].CompareTo(key) <= 0)
-                    low = mid;
-                else
-                    high = mid;
-                if (prevMid == mid)
-                    break;
-                prevMid = mid;
-            }
-            if (mid == lastIndex - 1 && keys[mid].CompareTo(key) < 0)
-            {
-                if (keys[mid + 1].CompareTo(key) <= 0)
-                    return lastIndex + 1;
-                else
-                    return lastIndex;
-            }
-            if (keys[mid].CompareTo(key) == 0)
-                mid++;
-            return mid;
-        }
         public static void SplitLeaf<K, V>(K[] leftKeys, V[] leftValues, K key, out int lastLeftKeysIndex, out K[] rightKeys, out V[] rightValues, out int lastRightKeysIndex, out K midElement) where K : IComparable<K>
         {
             var keysLength = leftKeys.Length;
@@ -273,35 +77,117 @@ namespace Core
             bool isFound = false;
             var keysLength = leftKeys.Length;
             int midIndex = (keysLength + 1) / 2;
-            int midIndexInLeftKeys = 0;
+            int keyIndex = 0;
+            midElement = default(K);
             for (int i = 0, j = 0; i < leftKeys.Length; i++, j++)
             {
                 if (key.CompareTo(leftKeys[i]) < 0 && !isFound)
                 {
-                    j++;
+                    if (midIndex == j)
+                        midElement = key;
+                    keyIndex = i;
                     isFound = true;
                 }
-                if (midIndex == j) midIndexInLeftKeys = i;
+                else if (midIndex == j)
+                {
+                    keyIndex = i;
+                    midElement = leftKeys[keyIndex];
+                    leftKeys[keyIndex] = default(K);
+                }
             }
-            midElement = leftKeys[midIndexInLeftKeys];
-            leftKeys[midIndexInLeftKeys] = default(K);
-            lastLeftKeyIndex = midIndexInLeftKeys - 1;
+            lastLeftKeyIndex = keyIndex - 1;
             lastRightKeyIndex = 0;
             rightKeys = new K[keysLength];
             rightChildren = new V[keysLength + 1];
-            for (int i = midIndexInLeftKeys + 1; i < keysLength; i++)
+            if (isFound)
             {
-                rightKeys[lastRightKeyIndex] = leftKeys[i];
-                leftKeys[i] = default(K);
+                for (int i = keyIndex; i < keysLength; i++)
+                {
+                    rightKeys[lastRightKeyIndex++] = leftKeys[i];
+                    leftKeys[i] = default(K);
+                }
+            }
+            else
+            {
+                bool isKeyWritten = false;
+                for (int i = keyIndex + 1; i < keysLength; i++)
+                {
+                    if (key.CompareTo(leftKeys[i]) < 0 && !isKeyWritten)
+                    {
+                        rightKeys[lastRightKeyIndex++] = key;
+                        isKeyWritten = true;
+                    }
+                    else rightKeys[lastRightKeyIndex++] = leftKeys[i];
+                    leftKeys[i] = default(K);
+                }
+                if (!isKeyWritten)
+                    rightKeys[lastRightKeyIndex++] = key;
             }
             lastRightKeyIndex--;
             lastRightChildIndex = 0;
-            for (int i = midIndexInLeftKeys + 1; i < leftChildren.Length; i++)
+            for (int i = keyIndex + 1; i < leftChildren.Length; i++)
             {
                 rightChildren[lastRightChildIndex++] = leftChildren[i];
                 leftChildren[i] = default(V);
             }
             lastRightChildIndex--;
+        }
+        public static bool AreKeysOk<K>(K[] keys, int lastIndex) where K : IComparable<K>
+        {
+            K prevK = keys[0];
+            for (int i = 1; i <= lastIndex; i++)
+            {
+                if (prevK.CompareTo(keys[i]) > 0)
+                    return false;
+                prevK = keys[i];
+            }
+            return true;
+        }
+        public static bool CheckNodes<K, V>(Node<K, V> node) where K : IComparable<K>
+        {
+            if (node is Leaf<K, V>)
+            {
+                if (!Helpers.AreKeysOk(node.Keys, node.KeyIndex))
+                {
+                    Console.WriteLine("Keys for {0} isn't OK", node);
+                    return false;
+                }
+                else return true;
+            }
+            var internalNode = node as InternalNode<K, V>;
+            var child = internalNode.Children[0];
+            if (!Helpers.AreKeysOk(child.Keys, child.KeyIndex))
+            {
+                Console.WriteLine("Keys for {0} isn't OK", child);
+                return false;
+            }
+            for (int i = 1; i <= internalNode.KeyIndex + 1; i++)
+            {
+                var currNode = internalNode.Children[i];
+                if (!Helpers.AreKeysOk(currNode.Keys, currNode.KeyIndex))
+                {
+                    Console.WriteLine("Keys for {0} isn't OK", currNode);
+                    return false;
+                }
+                if (child.GetType() != currNode.GetType())
+                {
+                    Console.WriteLine("Type of {0} != Type of {1}", child, internalNode);
+                    return false;
+                }
+                var maxKeyInChild = child.Keys.Take(child.KeyIndex + 1).Max();
+                var minKeyInCurrent = currNode.Keys.Take(currNode.KeyIndex + 1).Min();
+                if (maxKeyInChild.CompareTo(minKeyInCurrent) > 0)
+                {
+                    Console.WriteLine("MaxKey {0} must be > MinKey {1}", child, currNode);
+                    return false;
+                }
+                child = currNode;
+            }
+            for (int i = 0; i <= internalNode.KeyIndex + 1; i++)
+            {
+                CheckNodes(internalNode.Children[i]);
+            }
+            return true;
         }
     }
 }

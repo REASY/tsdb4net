@@ -10,6 +10,7 @@ namespace Core
     public class Leaf<K, V> : Node<K, V> where K: IComparable<K>
     {
         private readonly V[] _values;
+
         public V[] Values { get { return _values; } }
         public Leaf<K, V> Next { get; private set; }
 
@@ -42,7 +43,7 @@ namespace Core
             else
                 this.AddKeyValue(key, value);
         }
-        public override void Split(K key, out Node<K, V> rightNode, out K midElement)
+        public void Split(K key, out Node<K, V> rightNode, out K midElement)
         {
             midElement = default(K);
             int leftKeyIndex = 0;
@@ -82,7 +83,7 @@ namespace Core
             }
             else
             {
-                int insertIndex = Helpers.UpperBound(Keys, KeyIndex, key);
+                int insertIndex = SearchHelpers.UpperBound(Keys, KeyIndex + 1, key);
                 if (insertIndex <= KeyIndex)
                 {
                     for (int i = KeyIndex + 1; i > insertIndex; i--)

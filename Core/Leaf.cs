@@ -84,6 +84,7 @@ namespace Core
             else
             {
                 int insertIndex = SearchHelpers.UpperBound(Keys, KeyIndex + 1, key);
+                if (insertIndex == -1) insertIndex = KeyIndex + 1;
                 if (insertIndex <= KeyIndex)
                 {
                     for (int i = KeyIndex + 1; i > insertIndex; i--)

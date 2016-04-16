@@ -100,7 +100,7 @@ namespace Core.Tests
         internal List<long> DumpKeysOnLeafNodes(BPlusTree<long, long> bPlusTree)
         {
             var allKeys = new List<long>();
-            var mostLeftLeaf = bPlusTree.GetTheMostLeft();
+            var mostLeftLeaf = bPlusTree.GetMinLeaf();
             var temp = mostLeftLeaf;
             while (temp != null)
             {

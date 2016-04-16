@@ -15,7 +15,7 @@ namespace Core
             if (len <= SEARCH_ALGORITHM_KEYS_COUNT_THRESHOLD)
                 return UpperBoundLinear8(keys, len, key);
             else
-                return UpperBoundBinary(keys, len - 1, key);
+                return UpperBoundBinary(keys, len, key);
         }
         public static int UpperBoundLinear<K>(K[] keys, int len, K key) where K : IComparable<K>
         {
@@ -24,26 +24,24 @@ namespace Core
             {
                 if (key.CompareTo(keys[i]) < 0) { index = i; break; }
             }
-            if (index == -1) index = len;
             return index;
         }
         public static int UpperBoundLinear4<K>(K[] keys, int len, K key) where K : IComparable<K>
         {
             int index = -1;
-            int fullCnt = len / 4;
-            if (fullCnt == 0)
+            int fullLoops = len / 4;
+            if (fullLoops == 0)
             {
                 for (int i = 0; i < len; i++)
                 {
                     if (key.CompareTo(keys[i]) < 0) { index = i; break; }
                 }
-                if (index == -1) index = len;
                 return index;
             }
             else
             {
                 int i = 0;
-                for (int k = 0; k < fullCnt; k++, i += 4)
+                for (int k = 0; k < fullLoops; k++, i += 4)
                 {
                     if (key.CompareTo(keys[i]) < 0) { index = i; break; }
                     if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; break; }
@@ -71,27 +69,25 @@ namespace Core
                             break;
                     }
                 }
-                if (index == -1) index = len;
                 return index;
             }
         }
         public static int UpperBoundLinear8<K>(K[] keys, int len, K key) where K : IComparable<K>
         {
             int index = -1;
-            int fullCnt = len / 8;
-            if (fullCnt == 0)
+            int fullLoops = len / 8;
+            if (fullLoops == 0)
             {
                 for (int i = 0; i < len; i++)
                 {
                     if (key.CompareTo(keys[i]) < 0) { index = i; break; }
-                }
-                if (index == -1) index = len;
+                }                
                 return index;
             }
             else
             {
                 int i = 0;
-                for (int k = 0; k < fullCnt; k++, i += 8)
+                for (int k = 0; k < fullLoops; k++, i += 8)
                 {
                     if (key.CompareTo(keys[i]) < 0) { index = i; break; }
                     if (key.CompareTo(keys[i + 1]) < 0) { index = i + 1; break; }
@@ -153,20 +149,21 @@ namespace Core
                             break;
                     }
                 }
-                if (index == -1) index = len;
                 return index;
             }
         }
         public static int UpperBoundBinary<K>(K[] keys, int len, K key) where K : IComparable<K>
         {
+            if (keys.Length == 0)
+                return -1;
             if (keys.Length == 1)
-                return key.CompareTo(keys[0]) < 0 ? 0 : 1;
+                return key.CompareTo(keys[0]) < 0 ? 0 : -1;
             int low = 0;
             int high = len;
             int mid = low + (high - low) / 2;
             int prevMid = -1;
 
-            while (mid < keys.Length)
+            while (mid < len)
             {
                 if (key.CompareTo(keys[mid]) < 0)
                     high = mid;
@@ -177,7 +174,7 @@ namespace Core
                 prevMid = mid;
                 mid = low + (high - low) / 2;
             }
-            return mid;
+            return mid == len ? -1 : mid;
         }
     }
 }

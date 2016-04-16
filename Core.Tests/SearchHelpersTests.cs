@@ -25,7 +25,7 @@ namespace Core.Tests
         {
             for (int i = 1; i < 1000; i++)
             {
-                var keys = GetRandomKeys(i);
+                var keys = GetSortedRandomKeys(i);
                 for (int k = 0; k < keys.Length; k++)
                 {
                     Assert.AreEqual(SearchHelpers.UpperBoundLinear(keys, keys.Length, keys[k]), SearchHelpers.UpperBoundBinary(keys, keys.Length, keys[k]));
@@ -51,7 +51,7 @@ namespace Core.Tests
         {
             for (int i = 1; i < 1000; i++)
             {
-                var keys = GetRandomKeys(i);
+                var keys = GetSortedRandomKeys(i);
                 for (int k = 0; k < keys.Length; k++)
                 {
                     Assert.AreEqual(SearchHelpers.UpperBoundLinear(keys, keys.Length, keys[k]), SearchHelpers.UpperBoundLinear4(keys, keys.Length, keys[k]));
@@ -77,7 +77,7 @@ namespace Core.Tests
         {
             for (int i = 1; i < 1000; i++)
             {
-                var keys = GetRandomKeys(i);
+                var keys = GetSortedRandomKeys(i);
                 for (int k = 0; k < keys.Length; k++)
                 {
                     Assert.AreEqual(SearchHelpers.UpperBoundLinear(keys, keys.Length, keys[k]), SearchHelpers.UpperBoundLinear8(keys, keys.Length, keys[k]));
@@ -86,7 +86,7 @@ namespace Core.Tests
                 }
             }
         }
-        private long[] GetRandomKeys(int number)
+        private long[] GetSortedRandomKeys(int number)
         {
             Random rnd = new Random(Environment.TickCount);
 

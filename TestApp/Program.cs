@@ -213,7 +213,7 @@ namespace ConsoleApplication2
             foreach (var value in original)
             {
                 bPlusTree.Insert(value, new Measurement());
-                Console.WriteLine("Total number of elements: {0}", bPlusTree.GetCnt());
+                Console.WriteLine("Total number of elements: {0}", bPlusTree.Count);
             }
             Helpers.CheckNodes(bPlusTree.Root);
             sw.Stop();
@@ -226,7 +226,7 @@ namespace ConsoleApplication2
         private static void CheckCorrectness<K, V>(BPlusTree<K, V> bPlusTree, IEnumerable<K> allWrittenNumbers) where K :IComparable<K>
         {
             bool areNodesOk = Helpers.CheckNodes(bPlusTree.Root);
-            var leaf = bPlusTree.GetTheMostLeft();
+            var leaf = bPlusTree.GetMinLeaf();
             var keysInBTree = new HashSet<K>();
             while (leaf != null)
             {

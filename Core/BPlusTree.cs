@@ -14,17 +14,18 @@ namespace Core
         public Node<K, V> Root {get; private set;}
         public int MaxDegree { get; private set; }
         public int Count { get; private set; }
+        public int Height { get; private set; }
 
         public BPlusTree(int maxDegree)
         {
             MaxDegree = maxDegree;
             Root = new Leaf<K, V>(MaxDegree - 1);
         }
-        public void Insert(K k, V v)
+        public void Insert(K key, V value)
         {
             Node<K, V> newNode = null;
             K pivotElement = default(K);
-            Root.Insert(k, v, out newNode, out pivotElement);
+            Root.Insert(key, value, out newNode, out pivotElement);
             if (newNode != null)
             {
                 if (Root is Leaf<K, V> || Root.KeyIndex < _lastRootIndex)
@@ -33,27 +34,24 @@ namespace Core
                     newRoot.AddKeyChild(pivotElement, Root);
                     newRoot.Children[1] = newNode;
                     Root = newRoot;
+                    Height++;
                 }                
                 else
-                    (Root as InternalNode<K, V>).AddKeyChild(k, newNode);
+                    (Root as InternalNode<K, V>).AddKeyChild(key, newNode);
 
             }
             _lastRootIndex = Root.KeyIndex;
             Count++;
         }
-        public int GetCnt()
+        public bool TryFind(K k, out V value)
         {
-            var leaf = GetTheMostLeft();
-            int cnt = 0;
-            while (leaf != null)
-            {
-                cnt += leaf.KeyIndex + 1;
-               
-                leaf = leaf.Next;
-            }
-            return cnt;
+            value = default(V);
+            var node = Root;
+            while ((node = InternalNode<K, V>.ChooseSubtree(k, node)) is InternalNode<K, V>) { }
+            // TODO Impl when write LowerBound
+            return true;
         }
-        public Leaf<K, V> GetTheMostLeft()
+        public Leaf<K, V> GetMinLeaf()
         {
             if (Root is Leaf<K, V>)
                 return Root as Leaf<K, V>;
@@ -63,6 +61,21 @@ namespace Core
                 while (node is InternalNode<K, V>)
                 {
                     node = (node as InternalNode<K, V>).Children[0];
+                }
+                return node as Leaf<K, V>;
+            }
+        }
+        public Leaf<K, V> GetMaxLeaf()
+        {
+            if (Root is Leaf<K, V>)
+                return Root as Leaf<K, V>;
+            else
+            {
+                var node = Root;
+                while (node is InternalNode<K, V>)
+                {
+                    node = (node as InternalNode<K, V>).Children[node.KeyIndex + 1];
+                    Debug.Assert(node != null);
                 }
                 return node as Leaf<K, V>;
             }
@@ -86,7 +99,7 @@ namespace Core
         internal ICollection<K> DumpKeysOnLeafNodes()
         {
             var allKeys = new List<K>();
-            Leaf<K, V> mostLeftLeaf = GetTheMostLeft();
+            Leaf<K, V> mostLeftLeaf = GetMinLeaf();
             Leaf<K, V> temp = mostLeftLeaf;
             while (temp != null)
             {
@@ -100,7 +113,7 @@ namespace Core
         }
         internal void ShowAll()
         {
-            Leaf<K, V> mostLeftLeaf = GetTheMostLeft();
+            Leaf<K, V> mostLeftLeaf = GetMinLeaf();
             Leaf<K, V> temp = mostLeftLeaf;
             while (temp != null)
             {

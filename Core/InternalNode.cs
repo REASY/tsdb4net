@@ -174,6 +174,7 @@ namespace Core
             {
                 // Find the index where to do insertion
                 int insertIndex = SearchHelpers.UpperBound(Keys, KeyIndex + 1, key);
+                if (insertIndex == -1) insertIndex = KeyIndex + 1;
                 // Do we need to move keys and children?
                 if (insertIndex <= KeyIndex)
                 {
@@ -188,13 +189,14 @@ namespace Core
             }
 
         }
-        private static Node<K, V> ChooseSubtree(K key, Node<K, V> node)
+        public static Node<K, V> ChooseSubtree(K key, Node<K, V> node)
         {
             if (node is Leaf<K, V>) return node;
             else
             {
                 var n = node as InternalNode<K, V>;
                 int index = SearchHelpers.UpperBound(n.Keys, n.KeyIndex + 1, key);
+                if (index == -1) index = n.KeyIndex + 1;
                 node = n.Children[index];
                 return node;
             }

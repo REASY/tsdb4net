@@ -9,7 +9,7 @@ namespace Core.Tests
     [TestClass]
     public class BPlusTreeTests
     {
-        private readonly int NUMBER_OF_INSERTION = 100000;
+        private readonly int NUMBER_OF_INSERTION = 10000;
 
         [TestMethod]
         public void Insert_IncreasingOrder()
@@ -68,6 +68,73 @@ namespace Core.Tests
                 Assert.IsTrue(Helpers.CheckNodes(bPlusTree.Root));
                 Assert.AreEqual(NUMBER_OF_INSERTION, bPlusTree.Count);
                 CollectionAssert.AreEquivalent(itemsToInsert, DumpKeysOnLeafNodes(bPlusTree));
+            }
+        }
+        [TestMethod]
+        public void TryFindExact_ContainsKey()
+        {
+            BPlusTree<long, long> bPlusTree = new BPlusTree<long, long>(3);
+            bPlusTree.Insert(1, 1);
+            bPlusTree.Insert(2, 2);
+            bPlusTree.Insert(3, 3);
+            bPlusTree.Insert(4, 4);
+            bPlusTree.Insert(5, 5);
+            bPlusTree.Insert(6, 6);
+
+            long value;
+            Assert.IsTrue(bPlusTree.TryFindExact(1, out value));
+            Assert.AreEqual(1, value);
+            Assert.IsTrue(bPlusTree.TryFindExact(2, out value));
+            Assert.AreEqual(2, value);
+            Assert.IsTrue(bPlusTree.TryFindExact(3, out value));
+            Assert.AreEqual(3, value);
+            Assert.IsTrue(bPlusTree.TryFindExact(4, out value));
+            Assert.AreEqual(4, value);
+            Assert.IsTrue(bPlusTree.TryFindExact(5, out value));
+            Assert.AreEqual(5, value);
+            Assert.IsTrue(bPlusTree.TryFindExact(6, out value));
+            Assert.AreEqual(6, value);
+        }
+        [TestMethod]
+        public void TryFindExact_DoesntContainKey()
+        {
+            BPlusTree<long, long> bPlusTree = new BPlusTree<long, long>(3);
+            bPlusTree.Insert(1, 1);
+            bPlusTree.Insert(3, 3);
+            bPlusTree.Insert(5, 5);
+            bPlusTree.Insert(7, 7);
+            bPlusTree.Insert(9, 9);
+            bPlusTree.Insert(11, 11);
+
+            long value;
+            Assert.IsFalse(bPlusTree.TryFindExact(0, out value));
+            Assert.IsFalse(bPlusTree.TryFindExact(2, out value));
+            Assert.IsFalse(bPlusTree.TryFindExact(4, out value));
+            Assert.IsFalse(bPlusTree.TryFindExact(6, out value));
+            Assert.IsFalse(bPlusTree.TryFindExact(8, out value));
+            Assert.IsFalse(bPlusTree.TryFindExact(10, out value));
+        }
+        [TestMethod]
+        public void TryFindExact_Massive_ContainsKey()
+        {
+            for (int maxDegree = 3; maxDegree <= 101; maxDegree++)
+            {
+                BPlusTree<long, long> bPlusTree = new BPlusTree<long, long>(maxDegree);
+                var itemsToInsert = GetIncreasingCollection(NUMBER_OF_INSERTION);
+                foreach (var item in itemsToInsert)
+                {
+                    long k = item;
+                    long v = item;
+                    bPlusTree.Insert(k, v);
+                }
+
+                foreach (var item in itemsToInsert)
+                {
+                    long value;
+                    long k = item;
+                    Assert.IsTrue(bPlusTree.TryFindExact(k, out value));
+                    Assert.AreEqual(item, value);
+                }
             }
         }
         private List<long> GetIncreasingCollection(int size)

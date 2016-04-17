@@ -18,6 +18,8 @@ namespace Core
 
         public BPlusTree(int maxDegree)
         {
+            if (maxDegree < 3)
+                throw new ArgumentOutOfRangeException("maxDegree", maxDegree, "must be >= 3");
             MaxDegree = maxDegree;
             Root = new Leaf<K, V>(MaxDegree - 1);
         }
@@ -43,12 +45,23 @@ namespace Core
             _lastRootIndex = Root.KeyIndex;
             Count++;
         }
-        public bool TryFind(K k, out V value)
+        public bool TryFindExact(K key, out V value)
         {
             value = default(V);
-            var node = Root;
-            while ((node = InternalNode<K, V>.ChooseSubtree(k, node)) is InternalNode<K, V>) { }
-            // TODO Impl when write LowerBound
+            Leaf<K, V> leaf = GetLeafThatMayContainKey(key, Root);
+            int index = SearchHelpers.LowerBound(leaf.Keys, leaf.KeyIndex + 1, key);
+            if (index == -1 || leaf.Keys[index].CompareTo(key) != 0) return false;
+            value = leaf.Values[index];
+            return true;
+        }
+        public bool TryFindExactOrSmaller(K key, out V value)
+        {
+            value = default(V);
+            Leaf<K, V> leaf = GetLeafThatMayContainKey(key, Root);
+            int index = SearchHelpers.LowerBound(leaf.Keys, leaf.KeyIndex + 1, key);
+            if (index == 0 && leaf.Keys[index].CompareTo(key) > 0) return false;
+            if (index == -1) index = leaf.KeyIndex;
+            value = leaf.Values[index];
             return true;
         }
         public Leaf<K, V> GetMinLeaf()
@@ -96,21 +109,6 @@ namespace Core
                 return height;
             }
         }
-        internal ICollection<K> DumpKeysOnLeafNodes()
-        {
-            var allKeys = new List<K>();
-            Leaf<K, V> mostLeftLeaf = GetMinLeaf();
-            Leaf<K, V> temp = mostLeftLeaf;
-            while (temp != null)
-            {
-                for (int i = 0; i <= temp.KeyIndex; i++)
-                {
-                    allKeys.Add(temp.Keys[i]);
-                }
-                temp = temp.Next;
-            }
-            return allKeys;
-        }
         internal void ShowAll()
         {
             Leaf<K, V> mostLeftLeaf = GetMinLeaf();
@@ -124,6 +122,12 @@ namespace Core
                 temp = temp.Next;
             }
             Console.WriteLine();
+        }
+        private static Leaf<K, V> GetLeafThatMayContainKey(K key, Node<K, V> node)
+        {
+            while ((node = InternalNode<K, V>.ChooseSubtree(key, node)) is InternalNode<K, V>) { }
+            var leaf = node as Leaf<K, V>;
+            return leaf;
         }
     }
 }

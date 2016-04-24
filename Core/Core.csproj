@@ -40,6 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BPlusTreeLock.cs" />
+    <Compile Include="BPlusTreeRW.cs" />
+    <Compile Include="IBPlusTree.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="BPlusTree.cs" />
     <Compile Include="InternalNode.cs" />

@@ -1,9 +1,11 @@
 ﻿using Core;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ConsoleApplication2
@@ -14,19 +16,24 @@ namespace ConsoleApplication2
 
         struct Measurement
         {
-            long Id;
-            long Time;
-            double Value;
-            int Tag;
-            int User;
+            public long Id;
+            public long Time;
+            public double Value;
+            public int Tag;
+            public int User;
         }
 
         static void Main(string[] args)
         {
+            TestInDecreasingOrderBPlusTreeRW(51);
+            TestInDecreasingOrderBPlusTreeLock(51);
+            return;
+            //TestConcurrentBag();
+            //return;
             List<int> l = new List<int>(1000000);
             for (int i = 0; i < 10000; i++)
                 l.Add(i);
-            CompareLinearAndBinarySearch();
+            //CompareLinearAndBinarySearch();
             Console.WriteLine();
             Console.WriteLine("Testing BPlusTree");
             Console.WriteLine("*******************************************************************");
@@ -41,8 +48,8 @@ namespace ConsoleApplication2
                 Console.WriteLine("Test {0}", i);
                 Console.WriteLine("*******************************************************************");
                 decreasingOrderTime += TestInDecreasingOrder(maxDegree);
-                increasingOrderTime += TestInIncreasingOrder(maxDegree);
-                randomOrderTime += TestInRandomOrder(maxDegree);
+                //increasingOrderTime += TestInIncreasingOrder(maxDegree);
+                //randomOrderTime += TestInRandomOrder(maxDegree);
                 Console.WriteLine("*******************************************************************\r\n");
             }
             Console.WriteLine("Average times:");
@@ -53,6 +60,27 @@ namespace ConsoleApplication2
             Console.WriteLine("*******************************************************************");
             Console.WriteLine("L: {0}", l.Count);
             Console.ReadLine();
+        }
+        private static void TestConcurrentBag()
+        {
+            const int MAX_WRITERS = 16;
+            ConcurrentBag<long> bag = new ConcurrentBag<long>();
+            List<Thread> threads = new List<Thread>();
+            for (int i = 1; i <= MAX_WRITERS; i++)
+                threads.Add(new Thread(ThreadWorker));
+            Stopwatch sw = Stopwatch.StartNew();
+            threads.ForEach(x => x.Start(bag));
+            threads.ForEach(x => x.Join());
+            sw.Stop();
+            Console.WriteLine("{0} has written in {1} ms. Count: {2}", MAX_WRITERS, sw.ElapsedMilliseconds, bag.Count);
+            Console.ReadLine();
+
+        }
+        private static void ThreadWorker(object state)
+        {
+            var bag = (ConcurrentBag<long>)state;
+            for (int i = 0; i < 100000; i++)
+                bag.Add(i);
         }
         private static void CompareLinearAndBinarySearch()
         {
@@ -94,26 +122,165 @@ namespace ConsoleApplication2
                 Console.WriteLine("*******************************************************************\r\n");
             }
         }
+        private static void TestInDecreasingOrderBPlusTreeRW(int maxDegree)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            {
+                var bPlusTree = new BPlusTreeRW<long, Measurement>(maxDegree);
+                Task task = null;
+                for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
+                {
+                    bPlusTree.Insert(i, new Measurement());
+                    if (i == NUMBER_OF_INSERTION)
+                    {
+                        task = Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        });
+                    }
+                }
+                task.Wait();
+                sw.Stop();
+
+                Console.WriteLine("BPlusTreeRW: ");
+                Console.WriteLine("Decreasing order. Insert {0} elements: {1} ms", NUMBER_OF_INSERTION, sw.ElapsedMilliseconds);
+            }
+        }
+        private static void TestInDecreasingOrderBPlusTreeLock(int maxDegree)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            {
+                var bPlusTree = new BPlusTreeLock<long, Measurement>(maxDegree);
+                List<Task> tasks = new List<Task>();
+                for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
+                {
+                    bPlusTree.Insert(i, new Measurement());
+                    if (i == NUMBER_OF_INSERTION)
+                    {
+                        tasks.Add(Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        }));
+                        tasks.Add(Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        }));
+                        tasks.Add(Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        }));
+                    }
+                }
+                Task.WaitAll(tasks.ToArray());
+                sw.Stop();
+                Console.WriteLine("BPlusTreeLock: ");
+                Console.WriteLine("Decreasing order. Insert {0} elements: {1} ms", NUMBER_OF_INSERTION, sw.ElapsedMilliseconds);
+            }
+        }
         private static long TestInDecreasingOrder(int maxDegree)
         {
             long memBefore = GC.GetTotalMemory(false);
             Stopwatch sw = Stopwatch.StartNew();
-            BPlusTree<long, Measurement> bPlusTree = new BPlusTree<long, Measurement>(maxDegree);
-            for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
             {
-                bPlusTree.Insert(i, new Measurement());
+                BPlusTree<long, Measurement> bPlusTree = new BPlusTree<long, Measurement>(maxDegree);
+                for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
+                {
+                    bPlusTree.Insert(i, new Measurement());
+                    
+                }
+                sw.Stop();
+                long memAfter = GC.GetTotalMemory(false);
+                Console.WriteLine("BPlusTree: ");
+                Console.WriteLine("Decreasing order. Insert {0} elements: {1} ms", NUMBER_OF_INSERTION, sw.ElapsedMilliseconds);
+                Console.WriteLine("Memory: {0} MBytes", (memAfter - memBefore) / 1024 / 1024);
+                Console.WriteLine("Height: {0} ", bPlusTree.GetHeight());
+                HashSet<long> allWrittenNumbers = new HashSet<long>();
+                for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
+                {
+                    allWrittenNumbers.Add(i);
+                }
+                CheckCorrectness(bPlusTree, allWrittenNumbers);
             }
-            sw.Stop();
-            long memAfter = GC.GetTotalMemory(false);
-            Console.WriteLine("Decreasing order. Insert {0} elements: {1} ms", NUMBER_OF_INSERTION, sw.ElapsedMilliseconds);
-            Console.WriteLine("Memory: {0} MBytes", (memAfter - memBefore) / 1024 / 1024);
-            Console.WriteLine("Height: {0} ", bPlusTree.GetHeight());
-            HashSet<long> allWrittenNumbers = new HashSet<long>();
-            for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
+            sw = Stopwatch.StartNew();
             {
-                allWrittenNumbers.Add(i);
+                var bPlusTree = new BPlusTreeRW<long, Measurement>(maxDegree);
+                List<Task> tasks = new List<Task>();
+                for (int i = NUMBER_OF_INSERTION; i >= 1; i--)
+                {
+                    bPlusTree.Insert(i, new Measurement());
+                    if (i == NUMBER_OF_INSERTION)
+                    {
+                        tasks.Add(Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        }));
+                        tasks.Add(Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        }));
+                        tasks.Add(Task.Factory.StartNew(() =>
+                        {
+                            long res = 0;
+                            for (int k = NUMBER_OF_INSERTION; k >= 1; k--)
+                            {
+                                Measurement value;
+                                bPlusTree.TryFindExact(k, out value);
+                                res += value.Id;
+                            }
+                            Console.WriteLine("Result: {0}", res);
+                        }));
+                    }
+                }
+                Task.WaitAll(tasks.ToArray());
+                sw.Stop();
+                long memAfter = GC.GetTotalMemory(false);
+                Console.WriteLine("BPlusTreeRW: ");
+                Console.WriteLine("Decreasing order. Insert {0} elements: {1} ms", NUMBER_OF_INSERTION, sw.ElapsedMilliseconds);
+                Console.WriteLine("Memory: {0} MBytes", (memAfter - memBefore) / 1024 / 1024);
+                Console.WriteLine("Height: {0} ", bPlusTree.GetHeight());
             }
-            CheckCorrectness(bPlusTree, allWrittenNumbers);
             return sw.ElapsedMilliseconds;
         }
         private static long TestInIncreasingOrder(int maxDegree)
@@ -223,7 +390,7 @@ namespace ConsoleApplication2
             Console.WriteLine("Height: {0} ", bPlusTree.GetHeight());
             CheckCorrectness(bPlusTree, original);
         }
-        private static void CheckCorrectness<K, V>(BPlusTree<K, V> bPlusTree, IEnumerable<K> allWrittenNumbers) where K :IComparable<K>
+        private static void CheckCorrectness<K, V>(BPlusTree<K, V> bPlusTree, IEnumerable<K> allWrittenNumbers) where K : IComparable<K>
         {
             bool areNodesOk = Helpers.CheckNodes(bPlusTree.Root);
             var leaf = bPlusTree.GetMinLeaf();

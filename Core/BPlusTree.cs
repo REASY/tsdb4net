@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Core
 {
-    public class BPlusTree<K, V> where K : IComparable<K>
+    public class BPlusTree<K, V> : IBPlusTree<K, V> where K : IComparable<K>
     {
         private int _lastRootIndex = 0;
 

@@ -11,6 +11,10 @@ namespace Core
     {
         private readonly BPlusTree<K, V> _bPlusTree;
 
+        public int Count { get { return _bPlusTree.Count; } }
+        public int MaxDegree { get { return _bPlusTree.MaxDegree; } }
+        public Node<K, V> Root { get { return _bPlusTree.Root; } }
+
         public BPlusTreeLock(int maxDegree)
         {
             _bPlusTree = new BPlusTree<K, V>(maxDegree);
@@ -44,6 +48,11 @@ namespace Core
         {
             lock (_bPlusTree)
                 return _bPlusTree.TryFindExactOrSmaller(key, out value);
+        }
+        public List<V> FindRange(K begin, K end)
+        {
+            lock (_bPlusTree)
+                return _bPlusTree.FindRange(begin, end);
         }
     }
 }

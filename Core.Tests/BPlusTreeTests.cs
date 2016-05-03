@@ -137,6 +137,27 @@ namespace Core.Tests
                 }
             }
         }
+        [TestMethod]
+        public void FindRange_Test1()
+        {
+            BPlusTree<long, long> bPlusTree = new BPlusTree<long, long>(3);
+
+            bPlusTree.Insert(5, 5);
+            bPlusTree.Insert(7, 7);
+            bPlusTree.Insert(9, 9);
+            bPlusTree.Insert(11, 11);
+            bPlusTree.Insert(13, 13);
+            bPlusTree.Insert(15, 15);
+            bPlusTree.Insert(17, 17);
+            bPlusTree.Insert(19, 19);
+
+            CollectionAssert.AreEqual(bPlusTree.FindRange(10, 12), new List<long>() { 11 });
+            CollectionAssert.AreEqual(bPlusTree.FindRange(5, 19), new List<long>() { 5, 7, 9, 11, 13, 15, 17, 19 });
+            CollectionAssert.AreEqual(bPlusTree.FindRange(5, 5), new List<long>() { 5 });
+            CollectionAssert.AreEqual(bPlusTree.FindRange(5, 7), new List<long>() { 5, 7 });
+            CollectionAssert.AreEqual(bPlusTree.FindRange(11, 17), new List<long>() { 11, 13, 15, 17 });
+            CollectionAssert.AreEqual(bPlusTree.FindRange(3, 4), new List<long>() { });
+        }
         private List<long> GetIncreasingCollection(int size)
         {
             var collection = new List<long>(size);

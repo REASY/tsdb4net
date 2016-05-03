@@ -11,10 +11,9 @@ namespace Core
     {
         private int _lastRootIndex = 0;
 
-        public Node<K, V> Root {get; private set;}
+        public Node<K, V> Root { get; private set; }
         public int MaxDegree { get; private set; }
         public int Count { get; private set; }
-        public int Height { get; private set; }
 
         public BPlusTree(int maxDegree)
         {
@@ -36,8 +35,7 @@ namespace Core
                     newRoot.AddKeyChild(pivotElement, Root);
                     newRoot.Children[1] = newNode;
                     Root = newRoot;
-                    Height++;
-                }                
+                }
                 else
                     (Root as InternalNode<K, V>).AddKeyChild(key, newNode);
 
@@ -63,6 +61,29 @@ namespace Core
             if (index == -1) index = leaf.KeyIndex;
             value = leaf.Values[index];
             return true;
+        }
+        public List<V> FindRange(K begin, K end)
+        {
+            var result = new List<V>();
+            Leaf<K, V> leaf = GetLeafThatMayContainKey(begin, Root);
+            int index = SearchHelpers.LowerBound(leaf.Keys, leaf.KeyIndex + 1, begin);
+            if (index == -1) index = leaf.KeyIndex;
+            bool shouldStop = false;
+            while (leaf != null)
+            {
+                for (; index <= leaf.KeyIndex; index++)
+                {
+                    var key = leaf.Keys[index];
+                    if (key.CompareTo(begin) < 0) continue;
+                    if (end.CompareTo(key) < 0) { shouldStop = true; break; }
+                    result.Add(leaf.Values[index]);
+                }
+                if (shouldStop)
+                    break;
+                leaf = leaf.Next;
+                index = 0;
+            }
+            return result;
         }
         public Leaf<K, V> GetMinLeaf()
         {
